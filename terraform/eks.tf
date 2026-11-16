@@ -71,6 +71,9 @@ resource "aws_eks_access_policy_association" "root_admin" {
   access_scope {
     type = "cluster"
   }
+
+  # The association 404s if it's created before its access entry exists.
+  depends_on = [aws_eks_access_entry.root]
 }
 
 resource "aws_eks_access_entry" "caller" {
@@ -86,6 +89,8 @@ resource "aws_eks_access_policy_association" "caller_admin" {
   access_scope {
     type = "cluster"
   }
+
+  depends_on = [aws_eks_access_entry.caller]
 }
 
 # Assumed by IAM users (see trust policy) instead of granting cluster access
@@ -120,6 +125,8 @@ resource "aws_eks_access_policy_association" "eks_admin_role" {
   access_scope {
     type = "cluster"
   }
+
+  depends_on = [aws_eks_access_entry.eks_admin_role]
 }
 
 data "aws_caller_identity" "current" {}

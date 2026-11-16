@@ -95,7 +95,9 @@ variable "db_instance_class" {
 variable "db_engine_version" {
   description = "Postgres engine version for the shared RDS instance"
   type        = string
-  default     = "17.6"
+  # Major version only: RDS picks the current default minor, so the lab
+  # doesn't break each time AWS retires an old minor (as happened to 17.6).
+  default = "17"
 }
 
 variable "db_allocated_storage" {
