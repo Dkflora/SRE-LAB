@@ -365,7 +365,16 @@ kubectl apply -f "$REPO_ROOT/apps/food-delivery/redis/deployment.yaml"
 echo "==> 8/10 deploy all apps"
 for app in "${APPS[@]}"; do
   k8s_dir="$REPO_ROOT/apps/${app}/k8s"
+  # Services first. Each frontend's nginx resolves its backend's Service name
+  # at startup and exits if it doesn't exist yet -- in plain alphabetical
+  # order deployment-frontend.yaml lands before service-backend.yaml, so every
+  # frontend pod crash-looped twice on a fresh install and the
+  # "[SRE Lab] Pod restarts detected" monitor started out red.
+  for manifest in "$k8s_dir"/service-*.yaml; do
+    kubectl apply -f "$manifest"
+  done
   for manifest in "$k8s_dir"/*.yaml; do
+    case "$manifest" in */service-*.yaml) continue ;; esac
     ECR_REGISTRY="$ECR_REGISTRY" IMAGE_TAG="$IMAGE_TAG" envsubst '${ECR_REGISTRY} ${IMAGE_TAG}' < "$manifest" | kubectl apply -f -
   done
 done
